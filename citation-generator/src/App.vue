@@ -1,8 +1,7 @@
 <script setup>
-// Import de la fonction "ref" de Vue
 import { ref } from 'vue'
 
-/* Citations triées par catégorie */
+// Citations triées par catégories
 const citationsParCategorie = {
   motivation: [
     "Ils ne savaient pas que c’était impossible, alors ils l’ont fait. – Mark Twain",
@@ -21,28 +20,34 @@ const citationsParCategorie = {
   ]
 }
 
-// Stocke la catégorie sélectionnée
+// Réactivité des données
 const categorieActive = ref("motivation")
-
-// Stocke la citation affichée
 const citation = ref("Choisissez une catégorie puis cliquez sur 'Nouvelle citation'")
+const copieConfirmee = ref(false)  // état de confirmation de copie
+const showModal = ref(false)       // état de la modal de partage
 
-// Génère une citation aléatoire depuis la catégorie sélectionnée
+// Génère une citation aléatoire selon la catégorie sélectionnée
 function genererCitation() {
   const liste = citationsParCategorie[categorieActive.value]
   const index = Math.floor(Math.random() * liste.length)
   citation.value = liste[index]
 }
 
-// Copie la citation dans le presse-papiers
+// Copie la citation dans le presse-papiers et affiche un message de confirmation
 function copierCitation() {
   navigator.clipboard.writeText(citation.value)
-    .then(() => alert("Citation copiée !"))
-    .catch(() => alert("Erreur lors de la copie."))
+    .then(() => {
+      copieConfirmee.value = true
+      setTimeout(() => {
+        copieConfirmee.value = false
+      }, 2000)
+    })
+    .catch(() => {
+      console.error("Erreur lors de la copie.")
+    })
 }
 
-// Gère l'ouverture/fermeture de la modal de partage
-const showModal = ref(false)
+// Affiche la modal de partage
 function partagerCitation() {
   showModal.value = true
 }
@@ -50,14 +55,12 @@ function closeModal() {
   showModal.value = false
 }
 
-// Partage la citation via Facebook
+// Partage sur les réseaux sociaux
 function shareToFacebook() {
   const text = encodeURIComponent(citation.value)
   const url = `https://www.facebook.com/sharer/sharer.php?u=https://example.com&quote=${text}`
   window.open(url, '_blank')
 }
-
-// Partage la citation via WhatsApp
 function shareToWhatsApp() {
   const text = encodeURIComponent(citation.value)
   const url = `https://wa.me/?text=${text}`
@@ -67,7 +70,7 @@ function shareToWhatsApp() {
 
 <template>
   <div class="container">
-    <!-- Image de bannière -->
+    <!-- Image d'en-tête -->
     <img src="/img/image1.jpeg" alt="image1" class="banniere" />
     <h1>Générateur de Citations</h1>
 
@@ -78,7 +81,7 @@ function shareToWhatsApp() {
       <button @click="categorieActive = 'humour'">😂 Humour</button>
     </div>
 
-    <!-- Affichage de la citation avec transition -->
+    <!-- Affichage de la citation -->
     <transition name="fade" mode="out-in">
       <div class="citation-card" :key="citation">
         <p>{{ citation }}</p>
@@ -88,7 +91,13 @@ function shareToWhatsApp() {
     <!-- Boutons d'action -->
     <div class="actions">
       <button @click="genererCitation">Nouvelle citation</button>
-      <button @click="copierCitation" class="copier">Copier</button>
+
+      <div class="copier-wrapper">
+        <button @click="copierCitation" class="copier">Copier</button>
+        <!-- Message de confirmation -->
+        <span v-if="copieConfirmee" class="copie-message">Citation copiée</span>
+      </div>
+
       <button @click="partagerCitation" class="partager">Partager</button>
     </div>
 
@@ -106,47 +115,49 @@ function shareToWhatsApp() {
   </div>
 </template>
 
+
 <style scoped>
 /* Conteneur principal */
 .container {
   max-width: 600px;
-  margin: 50px auto;
+  margin: 70px auto;
   text-align: center;
   font-family: sans-serif;
   background-color: #121212;
   color: #eeeeee;
-  padding: 2rem;
+  padding: 3rem;
   border-radius: 12px;
 }
 
-/* Image de bannière */
+/* 🖼️ Image d'en-tête */
 .banniere {
   width: 100%;
   max-height: 300px;
   object-fit: cover;
   border-radius: 12px;
-  margin-bottom: 1rem;
+  margin-bottom: 2%;
 }
 
-/* Carte de citation */
+/* Bloc de citation */
 .citation-card {
   background: #1e1e1e;
-  padding: 2rem;
+  padding: 4rem;
   border-radius: 12px;
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
   margin-bottom: 1.5rem;
 }
 
-/* Zone des boutons */
+/* Boutons d'action */
 .actions {
   display: flex;
   justify-content: center;
   gap: 1rem;
+  align-items: center;
 }
 
-/* Boutons principaux (citation, copier, partager) */
+/* Style des boutons */
 button {
-  padding: 0.5rem 1rem;
+  padding: 0.7rem 2rem;
   background: #b4e197; /* vert pastel */
   color: #000;
   border: none;
@@ -157,22 +168,36 @@ button {
 button:hover {
   background: #dcd6f7; /* violet pastel au survol */
 }
-
-/* Effet rebond léger au clic */
 button:active {
   transform: scale(0.96);
 }
 
-/* Animation d'apparition */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.15s ease; 
+/* Message temporaire "copié" */
+.copier-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-.fade-enter-from,
-.fade-leave-to {
+.copie-message {
+  font-size: 0.8rem;
+  color: #a0f1a0;
+  margin-top: 0.2rem;
+  animation: fadeIn 0.3s ease-in-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Animation citation */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+.fade-enter-from, .fade-leave-to {
   opacity: 0;
 }
 
-/* Modal */
+/* Modal de partage */
 .modal-backdrop {
   position: fixed;
   top: 0;
@@ -217,7 +242,7 @@ button.close {
   border-radius: 6px;
 }
 
-/* Responsive */
+/* Responsive mobile */
 @media (max-width: 600px) {
   .container {
     padding: 1rem;
@@ -241,7 +266,7 @@ button.close {
   }
 }
 
-/* Filtres */
+/* Filtres catégorie */
 .filtres {
   display: flex;
   justify-content: center;
@@ -261,4 +286,3 @@ button.close {
   background-color: #555;
 }
 </style>
-
